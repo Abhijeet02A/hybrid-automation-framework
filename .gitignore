@@ -1,0 +1,24 @@
+# Maven
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+
+# IDEs (IntelliJ / Eclipse)
+.idea/
+*.iml
+*.iws
+.classpath
+.project
+.settings/
+
+# Reports and Logs
+allure-results/
+allure-report/
+test-output/
+*.log
+
+# OS generated files
+.DS_Store
+Thumbs.db
