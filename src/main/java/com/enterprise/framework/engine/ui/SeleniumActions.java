@@ -25,7 +25,7 @@ public class SeleniumActions {
     public void click(By locator) {
         try {
             WebElement element = wait.until(ExpectedConditions.elementToBeClickable(locator));
-            highlightElement(element); // Optional: visual debugging
+            // highlightElement(element); // Optional: visual debugging
             element.click();
         } catch (ElementClickInterceptedException e) {
             // Fallback: JS Click if standard click fails
@@ -37,13 +37,13 @@ public class SeleniumActions {
 
     // GENERIC TYPE: Handles clearing and entering text
     public void enterText(By locator, String text) {
+        click(locator);
         WebElement element = wait.until(ExpectedConditions.visibilityOfElementLocated(locator));
         element.clear();
         element.sendKeys(text);
     }
 
     // GENERIC READ: Get text for assertions
-
     public String getText(By locator) {
         return wait.until(ExpectedConditions.visibilityOfElementLocated(locator)).getText();
     }
@@ -56,5 +56,15 @@ public class SeleniumActions {
     // Helper for visual tracking
     private void highlightElement(WebElement element) {
         ((JavascriptExecutor) driver).executeScript("arguments[0].style.border='3px solid red'", element);
+    }
+
+    private void acceptAlertIfPresent() {
+        try {
+            Alert alert = new WebDriverWait(driver, Duration.ofSeconds(1))
+                    .until(ExpectedConditions.alertIsPresent());
+            alert.accept();
+        } catch (TimeoutException ignored) {
+            // No alert appeared; continue.
+        }
     }
 }

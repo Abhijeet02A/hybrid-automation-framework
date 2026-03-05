@@ -1,4 +1,4 @@
-package com.enterprise.framework.api;
+package com.enterprise.framework.engine.api;
 
 import io.qameta.allure.restassured.AllureRestAssured;
 import io.restassured.RestAssured;
@@ -51,7 +51,7 @@ public class ApiRequestBuilder {
         this.requestSpec.queryParams(params);
         return this;
     }
-    
+
     public ApiRequestBuilder withPathParams(Map<String, String> params) {
         this.requestSpec.pathParams(params);
         return this;

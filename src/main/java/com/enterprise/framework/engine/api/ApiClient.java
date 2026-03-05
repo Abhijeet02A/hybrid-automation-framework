@@ -1,4 +1,4 @@
-package com.enterprise.framework.api;
+package com.enterprise.framework.engine.api;
 
 import com.enterprise.framework.config.ConfigLoader;
 import io.restassured.http.ContentType;
@@ -11,13 +11,13 @@ import io.restassured.builder.RequestSpecBuilder;
  * Keeps track of the Base URL and Auth Token for THIS specific test scenario.
  */
 public class ApiClient {
-    
+
     private final RequestSpecification baseSpec;
 
     public ApiClient() {
         // Initialize common config for this scenario
         this.baseSpec = new RequestSpecBuilder()
-                .setBaseUri(ConfigLoader.getRequired("api.base.url"))
+                .setBaseUri(ConfigLoader.getRequired("api.bank.base.url"))
                 .setContentType(ContentType.JSON)
                 .setAccept(ContentType.JSON)
                 .build();

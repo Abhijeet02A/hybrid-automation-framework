@@ -21,4 +21,9 @@ public class ScenarioContext {
     public Boolean contains(String key) {
         return data.containsKey(key);
     }
+
+    public String getStringValue(String key) {
+        Object value = data.get(key);
+        return value != null ? value.toString() : null;
+    }
 }
