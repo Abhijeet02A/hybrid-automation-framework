@@ -11,13 +11,14 @@ import static io.cucumber.junit.platform.engine.Constants.PLUGIN_PROPERTY_NAME;
 @IncludeEngines("cucumber")
 @SelectClasspathResource("features")
 
-// Reporting plugins
-@ConfigurationParameter(key = PLUGIN_PROPERTY_NAME, value = "io.qameta.allure.cucumber7jvm.AllureCucumber7Jvm")
+// Reporting plugins: 'pretty' prints Gherkin steps to console, 'summary' prints
+// the final tally, allure report and cucumber report
+@ConfigurationParameter(key = PLUGIN_PROPERTY_NAME, value = "pretty, summary, io.qameta.allure.cucumber7jvm.AllureCucumber7Jvm, json:target/cucumber.json")
 
 // Parallel execution on or off - default is false, set to true to enable
 // URL of resource:
 // https://cucumber.io/docs/installation/java/#junit-5-integration
-@ConfigurationParameter(key = "cucumber.execution.parallel.enabled", value = "false")
+@ConfigurationParameter(key = "cucumber.execution.parallel.enabled", value = "true")
 
 // Use fixed number of threads
 @ConfigurationParameter(key = "cucumber.execution.parallel.config.strategy", value = "fixed")

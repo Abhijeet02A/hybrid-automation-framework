@@ -12,12 +12,14 @@ pom.xml.next
 .classpath
 .project
 .settings/
+*.vscode/
 
 # Reports and Logs
 allure-results/
 allure-report/
 test-output/
 *.log
+*.allure/
 
 # OS generated files
 .DS_Store

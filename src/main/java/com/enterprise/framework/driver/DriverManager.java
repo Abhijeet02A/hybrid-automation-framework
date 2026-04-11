@@ -12,7 +12,7 @@ public class DriverManager {
 
     public WebDriver getDriver() {
         if (driver == null) {
-            driver = driverFactory.createDriver();
+            driver = driverFactory.createInstance();
         }
         return driver;
     }
