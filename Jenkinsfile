@@ -1,10 +1,5 @@
 pipeline {
-    agent {
-        docker { 
-            image 'maven:3.9.5-eclipse-temurin-17' 
-            args '-v /root/.m2:/root/.m2' // Persist Maven dependencies
-        }
-    }
+    agent any
 
     tools {
         jdk 'jdk17'
@@ -13,14 +8,8 @@ pipeline {
 
     parameters {
         string(name: 'TEST_TAGS', defaultValue: '@integration', description: 'Cucumber tags to execute')
-        choice(name: 'TEST_ENV', choices: ['jenkins', 'qa'], description: 'Configuration environment')
+        choice(name: 'BROWSER', choices: ['chrome', 'firefox'], description: 'Target Browser')
         booleanParam(name: 'HEADLESS', defaultValue: true, description: 'Run browser in headless mode')
-    }
-
-    options {
-        timestamps()
-        disableConcurrentBuilds()
-        buildDiscarder(logRotator(numToKeepStr: '20'))
     }
 
     stages {
@@ -30,26 +19,34 @@ pipeline {
             }
         }
 
-        stage('Test') {
+        stage('Test Execution') {
             steps {
                 script {
-                    if (isUnix()) {
-                        sh "mvn -B clean test -Denv=${params.TEST_ENV} -Dheadless=${params.HEADLESS} -Dcucumber.filter.tags='${params.TEST_TAGS}'"
-                    } else {
-                        bat "mvn -B clean test -Denv=%TEST_ENV% -Dheadless=%HEADLESS% -Dcucumber.filter.tags=%TEST_TAGS%"
-                    }
+                    // grid.host is 'selenium-hub' because Jenkins and Grid are on the same Docker network
+                    def mvnCmd = "mvn clean verify -DrunMode=remote -Dgrid.host=selenium-hub " +
+                                 "-Dbrowser=${params.BROWSER} -Dheadless=${params.HEADLESS} " +
+                                 "-Dcucumber.filter.tags='${params.TEST_TAGS}'"
+
+                    sh mvnCmd
                 }
             }
         }
     }
 
     post {
-    always {
-        // Publish JUnit results
-        junit allowEmptyResults: true, testResults: 'target/surefire-reports/TEST-*.xml'
-        
-        // Generate and Publish the Allure HTML Report natively in Jenkins
-        allure includeProperties: false, jdk: '', results: [[path: 'target/allure-results']]
-    }
+        always {
+            junit testResults: 'target/surefire-reports/*.xml', allowEmptyResults: true
+        }
+        success {
+            script {
+                // Allure report only if build succeeds
+                catchError(buildResult: 'SUCCESS', stageResult: 'UNSTABLE') {
+                    allure includeProperties: false, jdk: '', results: [[path: 'target/allure-results']]
+                }
+            }
+        }
+        failure {
+            echo "Test execution failed. Check test reports in target/surefire-reports/"
+        }
     }
 }
