@@ -22,12 +22,21 @@ pipeline {
         stage('Test Execution') {
             steps {
                 script {
-                    // grid.host is 'selenium-hub' because Jenkins and Grid are on the same Docker network
-                    def mvnCmd = "mvn clean verify -DrunMode=remote -Dgrid.host=selenium-hub " +
-                                 "-Dbrowser=${params.BROWSER} -Dheadless=${params.HEADLESS} " +
-                                 "-Dcucumber.filter.tags='${params.TEST_TAGS}'"
+                    // EXPLICIT PATH RESOLUTION: This is the missing piece
+                    def mvnHome = tool name: 'maven3', type: 'maven'
+                    def javaHome = tool name: 'jdk17', type: 'jdk'
+                    
+                    withEnv(["PATH+MAVEN=${mvnHome}/bin", "JAVA_HOME=${javaHome}"]) {
+                        def mvnCmd = "mvn clean verify -DrunMode=remote -Dgrid.host=selenium-hub " +
+                                     "-Dbrowser=${params.BROWSER} -Dheadless=${params.HEADLESS} " +
+                                     "-Dcucumber.filter.tags='${params.TEST_TAGS}'"
 
-                    sh mvnCmd
+                        if (isUnix()) {
+                            sh mvnCmd
+                        } else {
+                            bat mvnCmd
+                        }
+                    }
                 }
             }
         }
@@ -39,7 +48,6 @@ pipeline {
         }
         success {
             script {
-                // Allure report only if build succeeds
                 catchError(buildResult: 'SUCCESS', stageResult: 'UNSTABLE') {
                     allure includeProperties: false, jdk: '', results: [[path: 'target/allure-results']]
                 }
