@@ -9,13 +9,11 @@ pipeline {
 
     // =========================================================================
     // PARAMETERS
-    // HOW IT WORKS:
-    //   - CHROME_THREADS=3  → spins up 3 parallel Chrome  branches: chrome-1, chrome-2, chrome-3
-    //   - FIREFOX_THREADS=2 → spins up 2 parallel Firefox branches: firefox-1, firefox-2
-    //   - Set either to 0   → that browser is completely skipped
-    //   - Both > 0          → all branches run in parallel simultaneously
     //
-    // Example: CHROME_THREADS=3 + FIREFOX_THREADS=2 = 5 total parallel branches
+    // CHROME_THREADS=3  → 3 parallel Chrome  branches: CHROME-THREAD-1,2,3
+    // FIREFOX_THREADS=2 → 2 parallel Firefox branches: FIREFOX-THREAD-1,2
+    // Set either to 0   → that browser is completely skipped
+    // Both > 0          → all branches run simultaneously on the Selenium Grid
     // =========================================================================
     parameters {
         choice(
@@ -46,7 +44,7 @@ pipeline {
         booleanParam(
             name: 'SKIP_TESTS',
             defaultValue: false,
-            description: 'Skip test execution (runs only Compile + SonarQube)'
+            description: 'Skip test execution (runs Sonar analysis only)'
         )
     }
 
@@ -58,50 +56,38 @@ pipeline {
         stage('Checkout') {
             steps {
                 checkout scm
-                echo "✅ Code checked out from: ${env.GIT_URL} | Branch: ${env.GIT_BRANCH}"
+                echo "✅ Checked out branch: ${env.GIT_BRANCH}"
             }
         }
 
         // =====================================================================
-        // STAGE 2: COMPILE
-        // Fail fast — catch compilation errors before wasting any time or
-        // infrastructure on Sonar analysis or test execution.
-        // =====================================================================
-        stage('Compile') {
-            steps {
-                sh 'mvn clean compile -q'
-                echo "✅ Compilation successful"
-            }
-        }
-
-        // =====================================================================
-        // STAGE 3: SONARQUBE ANALYSIS + QUALITY GATE
-        // Industry standard: run static analysis BEFORE tests.
-        // If code has critical bugs/vulnerabilities, fail fast here — don't
-        // waste time spinning up Selenium Grid for broken code.
-        // Quality Gate blocks the pipeline until SonarQube finishes processing.
+        // STAGE 2: SONARQUBE ANALYSIS
+        // Runs BEFORE tests — fail fast on code quality issues.
+        // -DskipTests means we compile + analyse only, no test execution here.
         // =====================================================================
         stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv('SonarServer') {
-                    sh 'mvn sonar:sonar -Dsonar.projectKey=hybrid-automation-framework'
+                    sh '''
+                        mvn clean verify sonar:sonar \
+                            -DskipTests \
+                            -Dsonar.projectKey=hybrid-automation-framework
+                    '''
                 }
                 echo "✅ SonarQube analysis submitted"
             }
         }
 
+        // =====================================================================
+        // STAGE 3: QUALITY GATE
+        // Waits for SonarQube to process and checks result via webhook.
+        // REQUIRES webhook in SonarQube → http://jenkins:8080/sonarqube-webhook/
+        // If Quality Gate fails → pipeline stops here. Tests will NOT run.
+        // =====================================================================
         stage('Quality Gate') {
             steps {
-                script {
-                    // Wait up to 3 minutes for SonarQube to process the report.
-                    // If the Quality Gate fails → pipeline aborts here.
-                    // Tests will NOT run on code that fails quality standards.
-                    timeout(time: 3, unit: 'MINUTES') {
-                        def qg = waitForQualityGate()
-                        if (qg.status != 'OK') {
-                            error "❌ Quality Gate FAILED: ${qg.status}. Fix code issues before running tests."
-                        }
-                    }
+                timeout(time: 3, unit: 'MINUTES') {
+                    waitForQualityGate abortPipeline: true
                 }
                 echo "✅ Quality Gate passed"
             }
@@ -109,18 +95,22 @@ pipeline {
 
         // =====================================================================
         // STAGE 4: PARALLEL TEST EXECUTION
-        // HOW THE PARALLEL LOGIC WORKS:
-        //   We build a map called parallelBranches where each key is a unique
-        //   branch name and each value is a closure (the work to do).
         //
-        //   CHROME_THREADS=3 adds keys: "CHROME-THREAD-1", "CHROME-THREAD-2", "CHROME-THREAD-3"
-        //   FIREFOX_THREADS=2 adds keys: "FIREFOX-THREAD-1", "FIREFOX-THREAD-2"
+        // HOW IT WORKS:
+        //   We build a map (parallelBranches) where:
+        //     key   = unique branch name e.g. "CHROME-THREAD-1"
+        //     value = closure (the mvn verify command for that thread)
         //
-        //   Groovy's parallel() then executes ALL keys simultaneously.
-        //   Each branch runs a full mvn verify independently on the Selenium Grid.
+        //   CHROME_THREADS=3  adds: CHROME-THREAD-1, CHROME-THREAD-2, CHROME-THREAD-3
+        //   FIREFOX_THREADS=2 adds: FIREFOX-THREAD-1, FIREFOX-THREAD-2
+        //   parallel() then runs ALL of them simultaneously.
         //
-        //   WHY unique keys matter: if two branches had the same key, one would
-        //   silently overwrite the other in the map — so we suffix with thread index.
+        //   -Pci-run activates the ci-run profile in pom.xml which triggers
+        //   allure:report after verify → generates target/allure-results
+        //
+        //   WHY buildBranch is a separate closure (not inline in the loop):
+        //   Groovy closures in for-loops capture variables by REFERENCE.
+        //   Without this pattern all threads would use the last loop value.
         // =====================================================================
         stage('Test Execution') {
             when {
@@ -130,38 +120,24 @@ pipeline {
                 script {
                     def parallelBranches = [:]
 
-                    // --- Helper closure to build a test branch ---
-                    // Extracted as a variable so the browser/index values are
-                    // captured correctly in each closure (avoids Groovy loop closure trap).
                     def buildBranch = { String browser, int index ->
                         return {
                             stage("${browser.toUpperCase()}-THREAD-${index}") {
-                                script {
-                                    def mvnHome = tool name: 'maven3', type: 'maven'
-                                    def javaHome = tool name: 'jdk17', type: 'jdk'
-
-                                    withEnv([
-                                        "PATH+MAVEN=${mvnHome}/bin",
-                                        "JAVA_HOME=${javaHome}"
-                                    ]) {
-                                        echo "🚀 Starting ${browser.toUpperCase()} thread ${index}"
-                                        sh """
-                                            mvn verify \
-                                                -DrunMode=remote \
-                                                -Dgrid.host=selenium-hub \
-                                                -Dbrowser=${browser} \
-                                                -Dheadless=${params.HEADLESS} \
-                                                -Denvironment=${params.ENVIRONMENT} \
-                                                -Dcucumber.filter.tags='${params.TEST_TAGS}'
-                                        """
-                                    }
-                                }
+                                sh """
+                                    mvn verify \
+                                        -Pci-run \
+                                        -DrunMode=remote \
+                                        -Dgrid.host=selenium-hub \
+                                        -Dbrowser=${browser} \
+                                        -Dheadless=${params.HEADLESS} \
+                                        -Denvironment=${params.ENVIRONMENT} \
+                                        -Dcucumber.filter.tags='${params.TEST_TAGS}'
+                                """
                             }
                         }
                     }
 
                     // --- Build Chrome branches ---
-                    // e.g. CHROME_THREADS=3 → adds CHROME-THREAD-1, CHROME-THREAD-2, CHROME-THREAD-3
                     def chromeCount = params.CHROME_THREADS.toInteger()
                     if (chromeCount > 0) {
                         for (int i = 1; i <= chromeCount; i++) {
@@ -169,11 +145,10 @@ pipeline {
                         }
                         echo "🌐 Chrome: ${chromeCount} parallel thread(s) queued"
                     } else {
-                        echo "⏭️  Chrome: skipped (CHROME_THREADS=0)"
+                        echo "⏭️  Chrome skipped (CHROME_THREADS=0)"
                     }
 
                     // --- Build Firefox branches ---
-                    // e.g. FIREFOX_THREADS=2 → adds FIREFOX-THREAD-1, FIREFOX-THREAD-2
                     def firefoxCount = params.FIREFOX_THREADS.toInteger()
                     if (firefoxCount > 0) {
                         for (int i = 1; i <= firefoxCount; i++) {
@@ -181,10 +156,9 @@ pipeline {
                         }
                         echo "🦊 Firefox: ${firefoxCount} parallel thread(s) queued"
                     } else {
-                        echo "⏭️  Firefox: skipped (FIREFOX_THREADS=0)"
+                        echo "⏭️  Firefox skipped (FIREFOX_THREADS=0)"
                     }
 
-                    // --- Guard: must have at least one branch ---
                     if (parallelBranches.isEmpty()) {
                         error "❌ No browsers selected. Set CHROME_THREADS or FIREFOX_THREADS > 0."
                     }
@@ -197,8 +171,7 @@ pipeline {
     }
 
     // =========================================================================
-    // POST ACTIONS
-    // 'always' runs regardless of pass/fail — ensures reports are never lost.
+    // POST ACTIONS — always runs regardless of pass/fail
     // =========================================================================
     post {
         always {
@@ -215,23 +188,21 @@ pipeline {
 
             allure([
                 includeProperties: false,
-                jdk: '',
-                results: [[path: 'target/allure-results']],
+                jdk              : '',
+                results          : [[path: 'target/allure-results']],
                 reportBuildPolicy: 'ALWAYS',
-                properties: []
+                properties       : []
             ])
         }
 
         success {
-            echo "✅ Pipeline PASSED — All ${params.CHROME_THREADS} Chrome + ${params.FIREFOX_THREADS} Firefox thread(s) completed successfully."
+            echo "✅ Pipeline PASSED — Chrome×${params.CHROME_THREADS} Firefox×${params.FIREFOX_THREADS} completed."
         }
-
         unstable {
-            echo "⚠️  Pipeline UNSTABLE — Some tests failed. Check Allure report for details."
+            echo "⚠️  Pipeline UNSTABLE — Some tests failed. Check Allure report."
         }
-
         failure {
-            echo "❌ Pipeline FAILED — Check console output, SonarQube Quality Gate, or Allure report."
+            echo "❌ Pipeline FAILED — Check console, Quality Gate, or Allure report."
         }
     }
 }
