@@ -76,15 +76,9 @@ public class DriverFactory {
 
     private WebDriver createLocalDriver(String browser, boolean headless) {
         if (browser.equals("firefox")) {
-            FirefoxOptions options = new FirefoxOptions();
-            if (headless)
-                options.addArguments("-headless");
-            return new FirefoxDriver(options);
+            return new FirefoxDriver(getFirefoxOptions(headless));
         }
-        ChromeOptions options = new ChromeOptions();
-        if (headless)
-            options.addArguments("--headless=new");
-        return new ChromeDriver(options);
+        return new ChromeDriver(getChromeOptions(headless));
     }
 
     private WebDriver createRemoteDriver(String browser, boolean headless) {
@@ -94,17 +88,38 @@ public class DriverFactory {
             URL url = new URL("http://" + host + ":4444/wd/hub");
 
             if (browser.equals("firefox")) {
-                FirefoxOptions options = new FirefoxOptions();
-                if (headless)
-                    options.addArguments("-headless");
-                return new RemoteWebDriver(url, options);
+                return new RemoteWebDriver(url, getFirefoxOptions(headless));
             }
-            ChromeOptions options = new ChromeOptions();
-            if (headless)
-                options.addArguments("--headless=new");
-            return new RemoteWebDriver(url, options);
+            return new RemoteWebDriver(url, getChromeOptions(headless));
         } catch (Exception e) {
             throw new RuntimeException("Grid connection failed!", e);
         }
+    }
+
+    /**
+     * CENTRALIZED OPTIONS MANAGEMENT
+     */
+    private ChromeOptions getChromeOptions(boolean headless) {
+        ChromeOptions options = new ChromeOptions();
+        if (headless) {
+            options.addArguments("--headless=new");
+        }
+        // Add all other common Chrome arguments here
+        options.addArguments("--start-maximized");
+        options.addArguments("--no-sandbox");
+        options.addArguments("--disable-dev-shm-usage");
+        options.addArguments("--remote-allow-origins=*");
+        return options;
+    }
+
+    private FirefoxOptions getFirefoxOptions(boolean headless) {
+        FirefoxOptions options = new FirefoxOptions();
+        if (headless) {
+            options.addArguments("-headless");
+        }
+        // Add all other common Firefox arguments here
+        options.addArguments("--width=1920");
+        options.addArguments("--height=1080");
+        return options;
     }
 }

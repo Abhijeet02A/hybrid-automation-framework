@@ -3,6 +3,7 @@ package com.enterprise.tests.pages.parabank;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.Random;
 
 import org.openqa.selenium.By;
 
@@ -59,6 +60,16 @@ public class RegisterBankUser {
         ui.click(clickRegister);
     }
 
+    private String generateRandomUsername() {
+        String chars = "abcdefghijklmnopqrstuvwxyz0123456789";
+        StringBuilder username = new StringBuilder();
+        Random random = new Random();
+        for (int i = 0; i < 10; i++) {
+            username.append(chars.charAt(random.nextInt(chars.length())));
+        }
+        return username.toString();
+    }
+
     public void register(List<Map<String, String>> rows) {
         openRegistrationPage();
         registerFormLocators();
@@ -71,7 +82,11 @@ public class RegisterBankUser {
         for (Map.Entry<String, String> entry : row.entrySet()) {
             By locator = fieldLocators.get(entry.getKey());
             if (locator != null) {
-                ui.enterText(locator, entry.getValue());
+                String value = entry.getValue();
+                if ("username".equals(entry.getKey())) {
+                    value = generateRandomUsername();
+                }
+                ui.enterText(locator, value);
             }
         }
         ui.click(registerBtn);

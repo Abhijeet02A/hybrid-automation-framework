@@ -1,20 +1,35 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
-    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.enterprise</groupId>
     <artifactId>hybrid-automation-framework</artifactId>
     <version>1.0.0</version>
 
     <properties>
+        <!-- Java -->
         <java.version>17</java.version>
-        <cucumber.version>7.14.0</cucumber.version>
-        <selenium.version>4.16.1</selenium.version>
-        <restassured.version>5.4.0</restassured.version>
-        <allure.version>2.24.0</allure.version>
-        <aspectj.version>1.9.20</aspectj.version>
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+        <!-- Test Framework -->
+        <cucumber.version>7.18.0</cucumber.version>
+        <surefire.version>3.5.2</surefire.version>
+        <junit.platform.version>1.11.0</junit.platform.version>
+        <junit.jupiter.version>5.11.0</junit.jupiter.version>
+
+        <!-- Reporting -->
+        <allure.version>2.29.0</allure.version>
+        <aspectj.version>1.9.22</aspectj.version>
+
+        <!-- Other Dependencies -->
+        <selenium.version>4.16.1</selenium.version>
+        <restassured.version>5.4.0</restassured.version>
+
+        <!-- Retry -->
+        <retry.count>2</retry.count>
     </properties>
 
     <profiles>
@@ -32,42 +47,30 @@
             </build>
         </profile>
     </profiles>
+    <dependencyManagement>
+
+        <dependencies>
+            <!-- Force consistent JUnit Platform version (this fixes the NoSuchMethodError) -->
+            <dependency>
+                <groupId>org.junit.platform</groupId>
+                <artifactId>junit-platform-commons</artifactId>
+                <version>${junit.platform.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.junit.platform</groupId>
+                <artifactId>junit-platform-engine</artifactId>
+                <version>${junit.platform.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.junit.platform</groupId>
+                <artifactId>junit-platform-launcher</artifactId>
+                <version>${junit.platform.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
     <dependencies>
-        <dependency>
-            <groupId>io.cucumber</groupId>
-            <artifactId>cucumber-picocontainer</artifactId>
-            <version>${cucumber.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.seleniumhq.selenium</groupId>
-            <artifactId>selenium-java</artifactId>
-            <version>${selenium.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>io.rest-assured</groupId>
-            <artifactId>rest-assured</artifactId>
-            <version>${restassured.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-databind</artifactId>
-            <version>2.15.2</version>
-        </dependency>
-
-        <dependency>
-            <groupId>io.qameta.allure</groupId>
-            <artifactId>allure-cucumber7-jvm</artifactId>
-            <version>${allure.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>io.qameta.allure</groupId>
-            <artifactId>allure-rest-assured</artifactId>
-            <version>${allure.version}</version>
-        </dependency>
-
+        <!-- Cucumber -->
         <dependency>
             <groupId>io.cucumber</groupId>
             <artifactId>cucumber-java</artifactId>
@@ -79,19 +82,54 @@
             <version>${cucumber.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.junit.platform</groupId>
-            <artifactId>junit-platform-suite</artifactId>
-            <version>1.10.1</version>
+            <groupId>io.cucumber</groupId>
+            <artifactId>cucumber-picocontainer</artifactId>
+            <version>${cucumber.version}</version>
         </dependency>
 
-        <!-- ...existing code... -->
+        <!-- Selenium + REST -->
+        <dependency>
+            <groupId>org.seleniumhq.selenium</groupId>
+            <artifactId>selenium-java</artifactId>
+            <version>${selenium.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.rest-assured</groupId>
+            <artifactId>rest-assured</artifactId>
+            <version>${restassured.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>2.15.2</version>
+        </dependency>
+
+        <!-- Allure -->
+        <dependency>
+            <groupId>io.qameta.allure</groupId>
+            <artifactId>allure-cucumber7-jvm</artifactId>
+            <version>${allure.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.qameta.allure</groupId>
+            <artifactId>allure-rest-assured</artifactId>
+            <version>${allure.version}</version>
+        </dependency>
+
+        <!-- JUnit -->
+        <dependency>
+            <groupId>org.junit.platform</groupId>
+            <artifactId>junit-platform-suite</artifactId>
+            <version>${junit.platform.version}</version>
+        </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>5.9.3</version>
+            <version>${junit.jupiter.version}</version>
             <scope>test</scope>
         </dependency>
-        <!-- ...existing code... -->
+
+        <!-- Logging -->
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-simple</artifactId>
@@ -99,19 +137,28 @@
             <scope>test</scope>
         </dependency>
 
+        <!-- AspectJ for Allure -->
+        <dependency>
+            <groupId>org.aspectj</groupId>
+            <artifactId>aspectjweaver</artifactId>
+            <version>${aspectj.version}</version>
+        </dependency>
     </dependencies>
 
     <build>
         <plugins>
+            <!-- Sonar -->
             <plugin>
                 <groupId>org.sonarsource.scanner.maven</groupId>
                 <artifactId>sonar-maven-plugin</artifactId>
                 <version>3.10.0.2594</version>
             </plugin>
+
+            <!-- Surefire with Main + Retry -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.1.2</version>
+                <version>${surefire.version}</version>
                 <configuration>
                     <testFailureIgnore>true</testFailureIgnore>
                     <argLine>
@@ -126,13 +173,48 @@
                         <version>${aspectj.version}</version>
                     </dependency>
                 </dependencies>
+                <!-- <executions>
+                    <execution>
+                        <id>default-test</id>
+                        <goals>
+                            <goal>test</goal>
+                        </goals>
+                        <configuration>
+                            <includes>
+                                <include>**/TestRunner.java</include>
+                            </includes>
+                            <testFailureIgnore>true</testFailureIgnore>
+                            <argLine>
+                -javaagent:${settings.localRepository}/org/aspectj/aspectjweaver/${aspectj.version}/aspectjweaver-${aspectj.version}.jar
+                            </argLine>
+                        </configuration>
+                    </execution>
+
+                    <execution>
+                        <id>retry-failing-tests</id>
+                        <phase>test</phase>
+                        <goals>
+                            <goal>test</goal>
+                        </goals>
+                        <configuration>
+                            <includes>
+                                <include>**/RerunFailedTestRunner.java</include>
+                            </includes>
+                            <rerunFailingTestsCount>${retry.count}</rerunFailingTestsCount>
+                            <testFailureIgnore>false</testFailureIgnore>
+                            <failIfNoTests>false</failIfNoTests>
+                        </configuration>
+                    </execution>
+                </executions> -->
             </plugin>
+
+            <!-- Allure -->
             <plugin>
                 <groupId>io.qameta.allure</groupId>
                 <artifactId>allure-maven</artifactId>
                 <version>2.12.0</version>
                 <configuration>
-                    <reportVersion>2.24.0</reportVersion>
+                    <reportVersion>2.29.0</reportVersion>
                     <resultsDirectory>${project.build.directory}/allure-results</resultsDirectory>
                 </configuration>
             </plugin>
