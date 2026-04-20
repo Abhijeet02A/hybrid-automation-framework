@@ -28,8 +28,8 @@
         <selenium.version>4.16.1</selenium.version>
         <restassured.version>5.4.0</restassured.version>
 
-        <!-- Retry -->
-        <retry.count>2</retry.count>
+        <!-- SonarQube Instructions -->
+        <sonar.coverage.exclusions>src/main/java/**, src/test/java/**</sonar.coverage.exclusions>
     </properties>
 
     <profiles>
@@ -173,39 +173,6 @@
                         <version>${aspectj.version}</version>
                     </dependency>
                 </dependencies>
-                <!-- <executions>
-                    <execution>
-                        <id>default-test</id>
-                        <goals>
-                            <goal>test</goal>
-                        </goals>
-                        <configuration>
-                            <includes>
-                                <include>**/TestRunner.java</include>
-                            </includes>
-                            <testFailureIgnore>true</testFailureIgnore>
-                            <argLine>
-                -javaagent:${settings.localRepository}/org/aspectj/aspectjweaver/${aspectj.version}/aspectjweaver-${aspectj.version}.jar
-                            </argLine>
-                        </configuration>
-                    </execution>
-
-                    <execution>
-                        <id>retry-failing-tests</id>
-                        <phase>test</phase>
-                        <goals>
-                            <goal>test</goal>
-                        </goals>
-                        <configuration>
-                            <includes>
-                                <include>**/RerunFailedTestRunner.java</include>
-                            </includes>
-                            <rerunFailingTestsCount>${retry.count}</rerunFailingTestsCount>
-                            <testFailureIgnore>false</testFailureIgnore>
-                            <failIfNoTests>false</failIfNoTests>
-                        </configuration>
-                    </execution>
-                </executions> -->
             </plugin>
 
             <!-- Allure -->

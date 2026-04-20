@@ -29,15 +29,3 @@ import static io.cucumber.junit.platform.engine.Constants.PLUGIN_PROPERTY_NAME;
 
 public class TestRunner {
 }
-
-/**
- * TODO:
- * Assertions class to handle all assertions in one place and provide better
- * error messages
- * 1. Set up for Parallel run
- * 2. Reporting with Allure
- * 3. Control with Jenkins pipelines
- * 4. Execution in Docker
- * 5. multi browser testing
- * 
- */

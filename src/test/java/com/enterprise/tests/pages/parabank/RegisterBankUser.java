@@ -7,14 +7,13 @@ import java.util.Random;
 
 import org.openqa.selenium.By;
 
-import com.enterprise.framework.config.ConfigLoader;
 import com.enterprise.framework.context.ScenarioContext;
-import com.enterprise.framework.driver.DriverManager;
 import com.enterprise.framework.engine.ui.SeleniumActions;
 
 public class RegisterBankUser {
 
     private final SeleniumActions ui;
+    private final ScenarioContext context;
 
     private final By clickRegister = By.linkText("Register");
     private final By accountOverview = By.linkText("Accounts Overview");
@@ -34,15 +33,12 @@ public class RegisterBankUser {
             "//table[@id='accountTable']//tbody//tr/td[count(//table[@id='accountTable']//th[text()='Account']/preceding-sibling::th) + 1]/a");
     private final Map<String, By> fieldLocators = new HashMap<>();
 
-    private final ScenarioContext context;
-
-    public RegisterBankUser(DriverManager driverManager, ScenarioContext context) {
-        this.ui = new SeleniumActions(driverManager.getDriver());
+    public RegisterBankUser(ScenarioContext context) {
         this.context = context;
+        this.ui = new SeleniumActions(context.getDriverManager().getDriver());
     }
 
-    public void registerFormLocators() {
-        fieldLocators.put("firstName", firstName);
+    public void registerFormLocators() {fieldLocators.put("firstName", firstName);
         fieldLocators.put("lastName", lastName);
         fieldLocators.put("address", address);
         fieldLocators.put("city", city);
@@ -56,18 +52,18 @@ public class RegisterBankUser {
     }
 
     public void openRegistrationPage() {
-        ui.openUrl(ConfigLoader.getRequired("ui.bank.base.url"));
+        ui.openUrl(context.getConfigLoader().get("ui.bank.base.url"));
         ui.click(clickRegister);
     }
 
     private String generateRandomUsername() {
         String chars = "abcdefghijklmnopqrstuvwxyz0123456789";
-        StringBuilder username = new StringBuilder();
+        StringBuilder randomUserName = new StringBuilder();
         Random random = new Random();
         for (int i = 0; i < 10; i++) {
-            username.append(chars.charAt(random.nextInt(chars.length())));
+            randomUserName.append(chars.charAt(random.nextInt(chars.length())));
         }
-        return username.toString();
+        return randomUserName.toString();
     }
 
     public void register(List<Map<String, String>> rows) {
