@@ -1,6 +1,6 @@
 Feature: User Integration Workflows
 
-  @integration
+  @integration1
   Scenario: Create User via API and Validate in UI
     Given I registered and created account to parabank and stored account id in context
       | firstName | lastName | address | city  | state | zipCode | phoneNumber | ssn    | username   | password | confirmPassword |

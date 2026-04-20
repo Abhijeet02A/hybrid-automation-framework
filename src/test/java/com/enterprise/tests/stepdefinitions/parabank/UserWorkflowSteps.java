@@ -14,17 +14,16 @@ import utils.AssertHelper;
 
 public class UserWorkflowSteps {
 
-    // Dependencies injected by PicoContainer
     private final UserApiLogic userApiLogic;
     private final ScenarioContext context;
     private final RegisterBankUser registerBankUser;
     private final AssertHelper assertHelper;
 
-    public UserWorkflowSteps(RegisterBankUser registerBankUser, UserApiLogic userApiLogic,
-            ScenarioContext context, AssertHelper assertHelper) {
-        this.registerBankUser = registerBankUser;
-        this.userApiLogic = userApiLogic;
+    public UserWorkflowSteps(ScenarioContext context, UserApiLogic userApiLogic, RegisterBankUser registerBankUser,
+            AssertHelper assertHelper) {
         this.context = context;
+        this.userApiLogic = userApiLogic;
+        this.registerBankUser = registerBankUser;
         this.assertHelper = assertHelper;
     }
 
@@ -40,13 +39,14 @@ public class UserWorkflowSteps {
 
     @Then("I verify the user id exists through API response and stored in context")
     public void i_verify_the_user_id_exists_through_api_response_and_stored_in_context() {
-        String accountNumberFromAPI = userApiLogic.getAccount(context.getStringValue("accountNumberFromUI"));
-        context.setContext("accountNumberFromAPI", accountNumberFromAPI);
+        String accountNumberFromAPI = userApiLogic
+                .getAccount(context.getStringValueFromScenarioContext("accountNumberFromUI"));
+        context.setStringValueInScenarioContext("accountNumberFromAPI", accountNumberFromAPI);
     }
 
     @Then("I verify the account details are correct")
     public void i_verify_the_account_details_are_correct() {
-        assertHelper.equals("Account Number", context.getStringValue("accountNumberFromUI"),
-                context.getStringValue("accountNumberFromAPI"));
+        assertHelper.equals("Account Number", context.getStringValueFromScenarioContext("accountNumberFromUI"),
+                context.getStringValueFromScenarioContext("accountNumberFromAPI"));
     }
 }

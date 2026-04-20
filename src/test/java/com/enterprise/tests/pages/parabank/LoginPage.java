@@ -1,26 +1,28 @@
 package com.enterprise.tests.pages.parabank;
 
-import com.enterprise.framework.config.ConfigLoader;
-import com.enterprise.framework.driver.DriverManager;
+import com.enterprise.framework.context.ScenarioContext;
 import com.enterprise.framework.engine.ui.SeleniumActions;
 import org.openqa.selenium.By;
 
 public class LoginPage {
 
     private final SeleniumActions ui;
+    private final ScenarioContext context;
 
     private final By usernameField = By.name("username");
     private final By passwordField = By.name("password");
     private final By loginBtn = By.cssSelector("input[type='submit'][value='Log In']");
 
-    public LoginPage(DriverManager driverManager) {
-        this.ui = new SeleniumActions(driverManager.getDriver());
+    public LoginPage(ScenarioContext context) {
+        this.context = context;
+        this.ui = new SeleniumActions(context.getDriverManager().getDriver());
     }
 
     public void login(String application) {
         login(
-                ConfigLoader.getRequired("ui.username"),
-                ConfigLoader.getRequired("ui.password"));
+
+                context.getConfigLoader().get("ui.username"),
+                context.getConfigLoader().get("ui.password"));
     }
 
     public void login(String username, String password) {

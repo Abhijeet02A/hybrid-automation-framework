@@ -4,8 +4,6 @@ import org.openqa.selenium.*;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
-import com.enterprise.framework.config.ConfigLoader;
-
 import java.time.Duration;
 
 public class SeleniumActions {
@@ -16,9 +14,7 @@ public class SeleniumActions {
     public SeleniumActions(WebDriver driver) {
         this.driver = driver;
         // Centralized explicit wait config
-        Long seconds = Long.parseLong(ConfigLoader.getRequired("ui.timeout.implicit"));
-        this.wait = new WebDriverWait(driver, Duration.ofSeconds(seconds));
-
+        this.wait = new WebDriverWait(driver, Duration.ofSeconds(10));
     }
 
     // GENERIC CLICK: Handles visibility, scroll, and click interception

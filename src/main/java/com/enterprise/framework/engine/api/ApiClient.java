@@ -1,6 +1,7 @@
 package com.enterprise.framework.engine.api;
 
-import com.enterprise.framework.config.ConfigLoader;
+import com.enterprise.framework.context.ScenarioContext;
+
 import io.restassured.http.ContentType;
 import io.restassured.specification.RequestSpecification;
 import io.restassured.builder.RequestSpecBuilder;
@@ -14,10 +15,10 @@ public class ApiClient {
 
     private final RequestSpecification baseSpec;
 
-    public ApiClient() {
+    public ApiClient(ScenarioContext context) {
         // Initialize common config for this scenario
         this.baseSpec = new RequestSpecBuilder()
-                .setBaseUri(ConfigLoader.getRequired("api.bank.base.url"))
+                .setBaseUri(context.getConfigLoader().getRequired("api.bank.base.url"))
                 .setContentType(ContentType.JSON)
                 .setAccept(ContentType.JSON)
                 .build();

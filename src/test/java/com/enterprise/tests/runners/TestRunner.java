@@ -13,7 +13,7 @@ import static io.cucumber.junit.platform.engine.Constants.PLUGIN_PROPERTY_NAME;
 
 // Reporting plugins: 'pretty' prints Gherkin steps to console, 'summary' prints
 // the final tally, allure report and cucumber report
-@ConfigurationParameter(key = PLUGIN_PROPERTY_NAME, value = "pretty, summary, io.qameta.allure.cucumber7jvm.AllureCucumber7Jvm, json:target/cucumber.json")
+@ConfigurationParameter(key = PLUGIN_PROPERTY_NAME, value = "pretty, summary, io.qameta.allure.cucumber7jvm.AllureCucumber7Jvm, json:target/cucumber.json, rerun:target/failed_scenarios.txt")
 
 // Parallel execution on or off - default is false, set to true to enable
 // URL of resource:
@@ -29,15 +29,3 @@ import static io.cucumber.junit.platform.engine.Constants.PLUGIN_PROPERTY_NAME;
 
 public class TestRunner {
 }
-
-/**
- * TODO:
- * Assertions class to handle all assertions in one place and provide better
- * error messages
- * 1. Set up for Parallel run
- * 2. Reporting with Allure
- * 3. Control with Jenkins pipelines
- * 4. Execution in Docker
- * 5. multi browser testing
- * 
- */
