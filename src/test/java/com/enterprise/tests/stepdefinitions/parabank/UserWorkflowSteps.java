@@ -3,6 +3,7 @@ package com.enterprise.tests.stepdefinitions.parabank;
 import java.util.List;
 import java.util.Map;
 
+import com.enterprise.framework.context.ParabankKeys;
 import com.enterprise.framework.context.ScenarioContext;
 import com.enterprise.tests.logic.api.parabank.UserApiLogic;
 import com.enterprise.tests.pages.parabank.RegisterBankUser;
@@ -33,20 +34,20 @@ public class UserWorkflowSteps {
         if (rows.isEmpty()) {
             throw new IllegalArgumentException("DataTable must contain at least one row");
         }
-
-        registerBankUser.register(rows);
+        context.setContext(ParabankKeys.ACCOUNT_NUMBER_FROM_UI,
+                registerBankUser.register(rows, context.getConfigLoader().getBankBaseUrl()));
     }
 
     @Then("I verify the user id exists through API response and stored in context")
     public void i_verify_the_user_id_exists_through_api_response_and_stored_in_context() {
         String accountNumberFromAPI = userApiLogic
-                .getAccount(context.getStringValueFromScenarioContext("accountNumberFromUI"));
-        context.setStringValueInScenarioContext("accountNumberFromAPI", accountNumberFromAPI);
+                .getAccount(context.getContext(ParabankKeys.ACCOUNT_NUMBER_FROM_UI));
+        context.setContext(ParabankKeys.ACCOUNT_NUMBER_FROM_API, accountNumberFromAPI);
     }
 
     @Then("I verify the account details are correct")
     public void i_verify_the_account_details_are_correct() {
-        assertHelper.equals("Account Number", context.getStringValueFromScenarioContext("accountNumberFromUI"),
-                context.getStringValueFromScenarioContext("accountNumberFromAPI"));
+        assertHelper.equals("Account Number", context.getContext(ParabankKeys.ACCOUNT_NUMBER_FROM_UI),
+                context.getContext(ParabankKeys.ACCOUNT_NUMBER_FROM_API));
     }
 }
