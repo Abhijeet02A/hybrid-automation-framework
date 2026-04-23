@@ -13,7 +13,6 @@ import com.enterprise.framework.engine.ui.SeleniumActions;
 public class RegisterBankUser {
 
     private final SeleniumActions ui;
-    private final ScenarioContext context;
 
     private final By clickRegister = By.linkText("Register");
     private final By accountOverview = By.linkText("Accounts Overview");
@@ -34,11 +33,11 @@ public class RegisterBankUser {
     private final Map<String, By> fieldLocators = new HashMap<>();
 
     public RegisterBankUser(ScenarioContext context) {
-        this.context = context;
-        this.ui = new SeleniumActions(context.getDriverManager().getDriver());
+        this.ui = context.getUI();
     }
 
-    public void registerFormLocators() {fieldLocators.put("firstName", firstName);
+    public void registerFormLocators() {
+        fieldLocators.put("firstName", firstName);
         fieldLocators.put("lastName", lastName);
         fieldLocators.put("address", address);
         fieldLocators.put("city", city);
@@ -51,11 +50,6 @@ public class RegisterBankUser {
         fieldLocators.put("confirmPassword", confirmPassword);
     }
 
-    public void openRegistrationPage() {
-        ui.openUrl(context.getConfigLoader().get("ui.bank.base.url"));
-        ui.click(clickRegister);
-    }
-
     private String generateRandomUsername() {
         String chars = "abcdefghijklmnopqrstuvwxyz0123456789";
         StringBuilder randomUserName = new StringBuilder();
@@ -66,8 +60,9 @@ public class RegisterBankUser {
         return randomUserName.toString();
     }
 
-    public void register(List<Map<String, String>> rows) {
-        openRegistrationPage();
+    public String register(List<Map<String, String>> rows, String url) {
+        ui.openUrl(url);
+        ui.click(clickRegister);
         registerFormLocators();
         if (rows == null || rows.isEmpty()) {
             throw new IllegalArgumentException("Registration data is required");
@@ -87,7 +82,6 @@ public class RegisterBankUser {
         }
         ui.click(registerBtn);
         ui.click(accountOverview);
-        context.setContext("accountNumberFromUI", ui.getText(textAccountNumber));
+        return ui.getText(textAccountNumber);
     }
-
 }

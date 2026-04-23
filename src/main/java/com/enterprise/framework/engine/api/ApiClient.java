@@ -6,11 +6,6 @@ import io.restassured.http.ContentType;
 import io.restassured.specification.RequestSpecification;
 import io.restassured.builder.RequestSpecBuilder;
 
-/**
- * SCENARIO SCOPED
- * Managed by PicoContainer.
- * Keeps track of the Base URL and Auth Token for THIS specific test scenario.
- */
 public class ApiClient {
 
     private final RequestSpecification baseSpec;
@@ -18,7 +13,7 @@ public class ApiClient {
     public ApiClient(ScenarioContext context) {
         // Initialize common config for this scenario
         this.baseSpec = new RequestSpecBuilder()
-                .setBaseUri(context.getConfigLoader().getRequired("api.bank.base.url"))
+                .setBaseUri(context.getConfigLoader().getApiBankBaseUrl())
                 .setContentType(ContentType.JSON)
                 .setAccept(ContentType.JSON)
                 .build();

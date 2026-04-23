@@ -15,17 +15,17 @@ public class LoginPage {
 
     public LoginPage(ScenarioContext context) {
         this.context = context;
-        this.ui = new SeleniumActions(context.getDriverManager().getDriver());
+        this.ui = context.getUI();
     }
 
     public void login(String application) {
         login(
 
-                context.getConfigLoader().get("ui.username"),
-                context.getConfigLoader().get("ui.password"));
+                context.getConfigLoader().getBankUserName(),
+                context.getConfigLoader().getBankPassword());
     }
 
-    public void login(String username, String password) {
+    private void login(String username, String password) {
         ui.enterText(usernameField, username);
         ui.enterText(passwordField, password);
         ui.click(loginBtn);

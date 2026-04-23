@@ -7,17 +7,15 @@ import org.openqa.selenium.support.ui.WebDriverWait;
 import java.time.Duration;
 
 public class SeleniumActions {
-    // ThreadLocal managed in DriverFactory, passed here via Constructor
     private final WebDriver driver;
     private final WebDriverWait wait;
 
-    public SeleniumActions(WebDriver driver) {
+    public SeleniumActions(WebDriver driver, long timeoutInSeconds) {
         this.driver = driver;
-        // Centralized explicit wait config
-        this.wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+        this.wait = new WebDriverWait(driver, Duration.ofSeconds(timeoutInSeconds));
+        this.wait.ignoring(StaleElementReferenceException.class);
     }
 
-    // GENERIC CLICK: Handles visibility, scroll, and click interception
     public void click(By locator) {
         try {
             WebElement element = wait.until(ExpectedConditions.elementToBeClickable(locator));
